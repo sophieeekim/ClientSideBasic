@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>Fetch JSON from API and map longitude & latitude</title>
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.5.1/dist/leaflet.css"
+        integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ=="
+        crossorigin=""/>
+        <script src="https://unpkg.com/leaflet@1.5.1/dist/leaflet.js"
+        integrity="sha512-GffPMF3RvMeYyc1LWMHtK8EbPv0iNZ8/oTtHPx9/cc2ILxQ+u905qIwdpULaqDkyBKgOaB57QTMg7ztg8Jm2Og=="
+        crossorigin=""></script>
+        <link rel="stylesheet" href="style.css"/>
+    </head>
+    <body>
+        <h1>Where is the International Space Station?</h1>
+        <p>latitude : <span id="lat"></span>°<br>
+        longitude : <span id="lon"></span>°
+        </p>
+        <div id="mapISS"></div>
+        
+
+        <script>
+            // 1. Making a map and tiles 
+            const mymap = L.map('mapISS').setView([0, 0], 1); 
+            // where it should show when it's loaded lat,lon [0,0] zoom level 1 (no zoom)
+            // L is leaflet 
+            const attribution =
+                '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+            const tileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+            const tiles = L.tileLayer(tileUrl, { attribution });
+            tiles.addTo(mymap);
+
+
+            // 2. Making a marker with a customized icon 
+            const issIcon = L.icon({
+                iconUrl : 'iss.svg',
+                iconSize : [50,50],
+                iconAnchor: [0,0]
+            });
+    
+            const marker = L.marker([0,0],{icon: issIcon}).addTo(mymap);
+            let firstTime = true;
+
+            function drawMarker(lat,lon){
+                marker.setLatLng([lat,lon]);
+                if(firstTime === true) {
+                    mymap.setView([lat,lon],2);
+                    firstTime = false;
+                }
+            }
+
+            const API_URL = 'https://api.wheretheiss.at/v1/satellites/25544';
+
+            async function getISS(){
+                const response = await fetch(API_URL); 
+                const data = await response.json();
+                const {latitude, longitude} = data;
+                document.getElementById('lat').innerText = latitude.toFixed(2);
+                document.getElementById('lon').innerText = longitude.toFixed(2);
+                
+                drawMarker(latitude,longitude);
+            }
+
+            function init(){
+                setInterval(getISS, 1000);
+                
+            }
+
+            init();
+        </script>
+    </body>
+</html>
